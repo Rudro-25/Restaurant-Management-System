@@ -1,0 +1,9 @@
+# Go-specific
+bin/
+*.exe
+*.test
+*.out
+vendor/
+.env
+.vscode/
+.idea/
