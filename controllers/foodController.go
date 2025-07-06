@@ -8,7 +8,6 @@ import (
 	"log"
 	"math"
 	"net/http"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -20,7 +19,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var foodCollection *mongo.Collection = database.OpenCollection(database.client, "food")
+var foodCollection *mongo.Collection = database.OpenCollection(database.Client, "food")
 var validate = validator.New()
 
 func GetFoods() gin.HandlerFunc {
@@ -32,7 +31,7 @@ func GetFoods() gin.HandlerFunc {
 			recordPerPage = 10
 		}
 
-		strcov.Atoi(c.Query("page"))
+		page, err := strconv.Atoi(c.Query("page"))
 		if err != nil || page <1 {
 			page = 1
 		}
@@ -41,23 +40,20 @@ func GetFoods() gin.HandlerFunc {
 		startIndex, err = strconv.Atoi(c.Query("startIndex"))
 
 		matchStage := bson.D{{"$match", bson.D{{}}}}
-		groupStage := bson.D{{"$group", bson.D{{"_id", bson.D{{"_id", "null"}}}, {"total_count", bson.D{{"$sum, 1"}}}, {"data", bson.D{{"$push", "$$ROOT"}}} }}}
+		groupStage := bson.D{{"$group", bson.D{{"_id", bson.D{{"_id", "null"}}}, {"total_count", bson.D{{"$sum", 1}}}, {"data", bson.D{{"$push", "$$ROOT"}}} }}}
 		projectStage := bson.D{
 			{
 				"$project", bson.D{
 					{"_id", 0},
 					{"total_count", 1},
 					{"food_items", bson.D{{"$slice", []interface{}{"$data", startIndex, recordPerPage}}}},
-				}
-			}
-		}
+				}}}
 
 		result, err := foodCollection.Aggregate(ctx, mongo.Pipeline{
-			 matchStage, groupStage, projectStage
-		})
+			 matchStage, groupStage, projectStage})
 		defer cancel()
 		if err != nil {
-			c.JSON{http.StatusInternalServerError, gin.h{"error":"error occured while listing food items"}}
+			c.JSON(http.StatusInternalServerError, gin.H{"error":"error occured while listing food items"})
 		}
 		var allFoods []bson.M
 		if err = result.All(ctx, &allFoods); err != nil{
@@ -126,7 +122,7 @@ func round(num float64) int {
 }
 
 func toFixed(num float64, precision int) float64 {
-	output := mat.Pow(10, float64(precision))
+	output := math.Pow(10, float64(precision))
 	return float64(round(num*output)) / output
 }
 
@@ -150,7 +146,7 @@ func UpdateFood() gin.HandlerFunc {
 		}
 
 		if food.Price != nil {
-			updateObj = append(updateObj, bson.E("price", food.Price))
+			updateObj = append(updateObj, bson.E{"price", food.Price})
 		}
 
 		if food.Food_image != nil {
@@ -181,7 +177,7 @@ func UpdateFood() gin.HandlerFunc {
 			ctx,
 			filter,
 			bson.D{
-				{"$set", updateObj}
+				{"$set", updateObj},
 			},
 			&opt,
 		)
