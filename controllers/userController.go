@@ -101,7 +101,7 @@ func SignUp() gin.HandlerFunc {
 		count, err := userCollection.CountDocuments(ctx, bson.M{"email":user.Email})
 		defer cancel()
 		if err != nil {
-			log.Panic(err)
+			// log.Panic(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "error occured when checking the email"})
 			return
 		}
@@ -133,6 +133,7 @@ func SignUp() gin.HandlerFunc {
 
 		resultInsertionNumber, insertErr := userCollection.InsertOne(ctx, user)
 		if insertErr != nil {
+			log.Printf("Error inserting user: %v", insertErr)  // Log the actual error
 			msg := fmt.Sprintf("User item was not created")
 			c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
 			return

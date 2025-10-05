@@ -132,7 +132,7 @@ func UpdateFood() gin.HandlerFunc {
 		var menu models.Menu
 		var food models.Food
 
-		if err := c.BindJSON(&menu); err != nil {
+		if err := c.BindJSON(&food); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
 
@@ -144,6 +144,9 @@ func UpdateFood() gin.HandlerFunc {
 		if food.Name != nil {
 			updateObj = append(updateObj, bson.E{"name", food.Name})
 		}
+
+		log.Println("Price: ", food.Price)
+		log.Println("Food_id: ", foodId)
 
 		if food.Price != nil {
 			updateObj = append(updateObj, bson.E{"price", food.Price})
@@ -165,7 +168,7 @@ func UpdateFood() gin.HandlerFunc {
 		} 
 
 		food.Updated_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
-		updateObj = append(updateObj, bson.E{"updated_at", menu.Updated_at})
+		updateObj = append(updateObj, bson.E{"updated_at", food.Updated_at})
 
 		upsert := true 
 
@@ -183,7 +186,7 @@ func UpdateFood() gin.HandlerFunc {
 		)
 
 		if err != nil {
-			msg := fmt.Sprintf("foot item update failed")
+			msg := fmt.Sprintf("food item update failed")
 			c.JSON(http.StatusInternalServerError, gin.H{"error":msg})
 			return
 		}

@@ -41,7 +41,7 @@ func GetTable() gin.HandlerFunc {
 		tableId := c.Param("table_id")
 		var table models.Table
 
-		err := tableCollection.FindOne(ctx, bson.M{"order_id": tableId}).Decode(&table)
+		err := tableCollection.FindOne(ctx, bson.M{"table_id": tableId}).Decode(&table)
 		defer cancel()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "error occured while fetching the order id"})

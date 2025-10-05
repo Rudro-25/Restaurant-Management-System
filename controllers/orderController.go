@@ -109,8 +109,11 @@ func UpdateOrder() gin.HandlerFunc {
 			return
 		}
 
+		log.Println("fff", orderId, order)
+
 		if order.Table_id != nil {
-			err := menuCollection.FindOne(ctx, bson.M{"table_id": order.Table_id}).Decode(&table)
+			err := tableCollection.FindOne(ctx, bson.M{"table_id": order.Table_id}).Decode(&table)
+			log.Println(err)
 			defer cancel()
 			if err != nil {
 				msg := fmt.Sprintf("message: Menu was not found")
@@ -134,7 +137,7 @@ func UpdateOrder() gin.HandlerFunc {
 			ctx,
 			filter,
 			bson.D{
-				{"$st", updateObj},
+				{"$set", updateObj},
 			},
 			&opt,
 		)
@@ -150,7 +153,7 @@ func UpdateOrder() gin.HandlerFunc {
 	}
 }
 
-func OrderItemOrderCreator(order models.Order) string{
+func OrderItemOrderCreator(order models.Order) string {
 	order.Created_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 	order.Updated_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 	order.ID = primitive.NewObjectID()

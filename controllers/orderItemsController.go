@@ -20,7 +20,7 @@ type OrderItemPack struct {
 	Order_items []models.OrderItem
 }
 
-var orderItemCollection *mongo.Collection = database.OpenCollection(database.Client, "order")
+var orderItemCollection *mongo.Collection = database.OpenCollection(database.Client, "orderItem")
 
 func GetOrderItems() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -59,12 +59,12 @@ func GetOrderItemByOrder() gin.HandlerFunc {
 func ItemsByOrder(id string) (OrderItems []primitive.M, err error) {
 	var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 
-	matchStage := bson.D{{"&match", bson.D{{"order_id", id}}}}
+	matchStage := bson.D{{"$match", bson.D{{"order_id", id}}}}
 	lookupStage := bson.D{{"$lookup", bson.D{{"from", "food"}, {"localField", "food_id"}, {"foreignField", "food_id"}, {"as", "food"}}}}
 	unwindStage := bson.D{{"$unwind", bson.D{{"path", "$food"},{"preserveNullAndEmptyArrays", true}}}}
 
 	lookupOrderStage := bson.D{{"$lookup", bson.D{{"from", "order"}, {"localField", "order_id"}, {"foreignField", "order_id"}, {"as", "order"}}}}
-	unwindorderStorage := bson.D{{"$unwind", bson.D{{"path", "$order"}, {"preserveNullAndEmptyArrays", true}}}}
+	unwindorderStage := bson.D{{"$unwind", bson.D{{"path", "$order"}, {"preserveNullAndEmptyArrays", true}}}}
 
 	lookupTableStage := bson.D{{"$lookup", bson.D{{"from", "table"}, {"localField", "order.table_id"}, {"foreignField", "table_id"}, {"as", "table"}}}}
 	unwindTableStage := bson.D{{"$unwind", bson.D{{"$path", "$table"}, {"preserveNullAndEmptyArrays", true}}}}
@@ -101,7 +101,7 @@ func ItemsByOrder(id string) (OrderItems []primitive.M, err error) {
 		lookupStage,
 		unwindStage,
 		lookupOrderStage,
-		unwindorderStorage,
+		unwindorderStage,
 		lookupTableStage,
 		unwindTableStage,
 		projectStage,
@@ -128,9 +128,10 @@ func GetOrderItem() gin.HandlerFunc {
 		orderItemId := c.Param("order_item_id")
 		var orderItem models.OrderItem
 
-		err := orderItemCollection.FindOne(ctx, bson.M{"orderItem_Id": orderItemId}).Decode(&orderItem)
+		err := orderItemCollection.FindOne(ctx, bson.M{"order_item_id": orderItemId}).Decode(&orderItem)
 		defer cancel()
 		if err != nil {
+			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "error occured while listing order items"})
 			return
 		}
