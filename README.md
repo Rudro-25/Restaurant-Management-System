@@ -1,6 +1,6 @@
 `go run main.go`
 
-or using docker [don't know how it worked for the second time]
+or using docker 
 ```
 docker stop mongo
 docker rm mongo
